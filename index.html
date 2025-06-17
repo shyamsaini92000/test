@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Notes</title>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <title>📝 My Notes</title>
+  <meta charset="UTF-8" />
 </head>
-<body style="font-family:sans-serif; padding:20px;">
+<body style="font-family:sans-serif; padding:20px; max-width:600px; margin:auto;">
   <h2>📝 Add Note</h2>
 
   <label>Date:</label><br>
@@ -15,51 +14,58 @@
   <input type="time" id="time"><br><br>
 
   <label>Note:</label><br>
-  <textarea id="note" rows="5" cols="40"></textarea><br><br>
+  <textarea id="note" rows="5" cols="50" placeholder="Write your note here..."></textarea><br><br>
 
-  <button onclick="saveNote()">Save Note</button>
+  <button onclick="saveNote()">💾 Save Note</button>
 
-  <script>
-    // Your Firebase Config ↓↓↓
+  <p id="status" style="color:green; font-weight:bold;"></p>
 
-      const firebaseConfig = {
-    apiKey: "AIzaSyArVv8vkKVesKucyDWIaA6fqlMIid_rHCM",
-    authDomain: "my-notes-1786d.firebaseapp.com",
-    projectId: "my-notes-1786d",
-    storageBucket: "my-notes-1786d.firebasestorage.app",
-    messagingSenderId: "387565728598",
-    appId: "1:387565728598:web:4992242a04b3e154685cf7",
-    measurementId: "G-S9CFMHH3ZZ"
-  };
+  <!-- Firebase scripts (modern module style) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // ✅ Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyArVv8vkKVesKucyDWIaA6fqlMIid_rHCM",
+      authDomain: "my-notes-1786d.firebaseapp.com",
+      projectId: "my-notes-1786d",
+      storageBucket: "my-notes-1786d.firebasestorage.app",
+      messagingSenderId: "387565728598",
+      appId: "1:387565728598:web:4992242a04b3e154685cf7",
+      measurementId: "G-S9CFMHH3ZZ"
+    };
 
-    function saveNote() {
+    // ✅ Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ✅ Save note function
+    window.saveNote = async function () {
       const date = document.getElementById("date").value;
       const time = document.getElementById("time").value;
       const note = document.getElementById("note").value;
+      const status = document.getElementById("status");
 
       if (!date || !time || !note) {
-        alert("Please fill all fields");
+        alert("⚠️ Please fill all fields");
         return;
       }
 
-      db.collection("notes").add({
-        date: date,
-        time: time,
-        note: note,
-        created: new Date()
-      }).then(() => {
-        alert("✅ Note saved successfully!");
+      try {
+        await addDoc(collection(db, "notes"), {
+          date,
+          time,
+          note,
+          created: new Date()
+        });
+        status.innerText = "✅ Note saved!";
         document.getElementById("note").value = "";
-      }).catch(error => {
-        alert("❌ Error: " + error);
-      });
-    }
+      } catch (error) {
+        status.style.color = "red";
+        status.innerText = "❌ Error saving note: " + error;
+      }
+    };
   </script>
-  <script type="module">
-</script>
 </body>
 </html>
