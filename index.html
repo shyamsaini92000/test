@@ -25,7 +25,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    // ✅ Your Firebase Config
+    // ✅ Your Firebase Config (working)
     const firebaseConfig = {
       apiKey: "AIzaSyArVv8vkKVesKucyDWIaA6fqlMIid_rHCM",
       authDomain: "my-notes-1786d.firebaseapp.com",
@@ -59,11 +59,14 @@
           note,
           created: new Date()
         });
+        alert("✅ Your note has been saved!");
         status.innerText = "✅ Note saved!";
+        status.style.color = "green";
         document.getElementById("note").value = "";
       } catch (error) {
         status.style.color = "red";
         status.innerText = "❌ Error saving note: " + error;
+        alert("❌ Failed to save note. Try again.");
       }
     };
   </script>
