@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>📝 My Notes</title>
-  <meta charset="UTF-8" />
+  <title>📝 My Notes App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, textarea, button { width: 100%; margin: 8px 0; padding: 10px; font-size: 16px; }
+    .note-card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; border-radius: 6px; background: #f9f9f9; }
+    .note-card small { color: gray; }
+    .note-card button { margin-top: 5px; font-size: 14px; }
+  </style>
 </head>
-<body style="font-family:sans-serif; padding:20px; max-width:600px; margin:auto;">
-  <h2>📝 Add Note</h2>
+<body>
+  <h2>📝 My Notes</h2>
 
-  <label>Date:</label><br>
-  <input type="date" id="date"><br><br>
-
-  <label>Time:</label><br>
-  <input type="time" id="time"><br><br>
-
-  <label>Note:</label><br>
-  <textarea id="note" rows="5" cols="50" placeholder="Write your note here..."></textarea><br><br>
-
+  <input type="date" id="date" />
+  <input type="time" id="time" />
+  <textarea id="note" placeholder="Write your note..." rows="4"></textarea>
   <button onclick="saveNote()">💾 Save Note</button>
 
-  <p id="status" style="color:green; font-weight:bold;"></p>
+  <div id="notes-list"></div>
 
-  <!-- Firebase scripts (modern module style) -->
+  <!-- Firebase (module style) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    // ✅ Your Firebase Config (working)
     const firebaseConfig = {
       apiKey: "AIzaSyArVv8vkKVesKucyDWIaA6fqlMIid_rHCM",
       authDomain: "my-notes-1786d.firebaseapp.com",
@@ -36,39 +37,61 @@
       measurementId: "G-S9CFMHH3ZZ"
     };
 
-    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const notesCol = collection(db, "notes");
 
-    // ✅ Save note function
-    window.saveNote = async function () {
+    async function saveNote() {
       const date = document.getElementById("date").value;
       const time = document.getElementById("time").value;
       const note = document.getElementById("note").value;
-      const status = document.getElementById("status");
 
       if (!date || !time || !note) {
-        alert("⚠️ Please fill all fields");
+        alert("⚠️ Fill all fields");
         return;
       }
 
-      try {
-        await addDoc(collection(db, "notes"), {
-          date,
-          time,
-          note,
-          created: new Date()
-        });
-        alert("✅ Your note has been saved!");
-        status.innerText = "✅ Note saved!";
-        status.style.color = "green";
-        document.getElementById("note").value = "";
-      } catch (error) {
-        status.style.color = "red";
-        status.innerText = "❌ Error saving note: " + error;
-        alert("❌ Failed to save note. Try again.");
-      }
-    };
+      await addDoc(notesCol, {
+        date, time, note, created: new Date()
+      });
+
+      alert("✅ Note saved!");
+      document.getElementById("note").value = "";
+      loadNotes();
+    }
+
+    async function loadNotes() {
+      const list = document.getElementById("notes-list");
+      list.innerHTML = "";
+      const snapshot = await getDocs(notesCol);
+      snapshot.forEach(docSnap => {
+        const n = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "note-card";
+        div.innerHTML = `
+          <strong>${n.date} ${n.time}</strong><br>
+          <textarea rows="3" style="width:100%;" onchange="updateNote('${docSnap.id}', this.value)">${n.note}</textarea>
+          <button onclick="deleteNote('${docSnap.id}')">🗑️ Delete</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function deleteNote(id) {
+      await deleteDoc(doc(db, "notes", id));
+      alert("🗑️ Note deleted");
+      loadNotes();
+    }
+
+    async function updateNote(id, newText) {
+      await updateDoc(doc(db, "notes", id), { note: newText });
+    }
+
+    window.saveNote = saveNote;
+    window.deleteNote = deleteNote;
+    window.updateNote = updateNote;
+
+    loadNotes(); // Load notes on page load
   </script>
 </body>
 </html>
